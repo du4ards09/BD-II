@@ -1,4 +1,4 @@
-﻿USE BdConfeitariaSonho
+﻿USE BdConfeitariaSonhos
 
 --Maria Eduarda Lima
 --A)Criar uma StoredProcedure para inserir as categorias de produto conforme abaixo: Ao inserir uma categoria de produto, confirmar pelo seu nome se o mesmo já existe no banco de dados. Nesse caso, enviar uma mensagem com essa situação ao usuário.
@@ -19,13 +19,12 @@ AS
 		PRINT('Categoria '+@nomeCategoria+' cadastrado com sucesso')
 	END
 
+	SELECT * FROM tbCategoria
+
 EXEC spInserindoCategorias 'Bolo Festa'
 EXEC spInserindoCategorias 'Bolo Simples'
 EXEC spInserindoCategorias 'Torta'
 EXEC spInserindoCategorias 'Salgado'
-EXEC spInserindoCategorias 'Vegano'
-
-SELECT * FROM tbCategoria
 
 --Marcus
 --B)Criar  uma  Stored Procedure  para  inserir os  produtos abaixo,  sendo  que,  a  procedure  deverá antes de inserir verificar se o nome do produto já existe, evitando assim que um produto seja duplicado:
@@ -49,6 +48,9 @@ AS
 
 	END
 
+	SELECT * FROM tbProduto
+
+
 EXEC spInserirProduto 'Bolo Floresta Negra',42.00,1
 EXEC spInserirProduto 'Bolo Prestígio',43.00,1
 EXEC spInserirProduto 'Bolo Nutella',44.00,1
@@ -60,9 +62,7 @@ EXEC spInserirProduto'Torta de escarola',44.00,3
 EXEC spInserirProduto 'Coxinha de frango',25.00,4
 EXEC spInserirProduto 'Esfiha carne',27.00,4
 EXEC spInserirProduto 'Folhado queijo',31.00,4
-EXEC spInserirProduto 'Risoles de palmito',29.00,44
-
-SELECT * FROM tbProduto
+EXEC spInserirProduto 'Risoles misto',29.00,4
 
 --Maria Eduarda Lima
 --c)Criar uma stored procedure para cadastrar os clientes abaixo relacionados, sendo que deverão ser feitas duas validações:-Verificar pelo CPF se o cliente já existe. 
@@ -101,14 +101,16 @@ AS
 		PRINT ('Cliente: ' + @nomeCliente + ' cadastrado(a) com sucesso!')
 	END
 
+	SELECT * FROM tbCliente
+
+
 EXEC spCadastrarClientes 'Samira Fatah','05/05/1996','73558849213','F','Rua Aguapeí','100','08.090-00','Guaianases','São Paulo','São Paulo'
 EXEC spCadastrarClientes 'Celia Nogueira','06/06/1992','55504743109','F','Rua Andes','234','08.456-09','Guaianases','São Paulo','São Paulo'
 EXEC spCadastrarClientes 'Paulo Cesar Siqueira','04/04/1984','73558849456','M','Rua Castelo do Piauí','232','08.109-000','Itaquera','São Paulo','São Paulo'
 EXEC spCadastrarClientes 'Rodrigo Favaroni','09/04/1991','75958849456','M','Rua Sansão Castelo Branco','10','08.431-090','Guaianases','São Paulo','São Paulo'
 EXEC spCadastrarClientes 'Flávia Regina Brito','22/04/1992','82478659204','F','Rua Mariano Moro','300','08.200-123','Itaquera','São Paulo','São Paulo'
-EXEC spCadastrarClientes  'Cristiana Terra Mendonça', '15/01/1974','81154228200','F', 'Avenida Vinte e Um de Julho','90','68904-680','Pimentas','São Paulo','São Paulo'
+EXEC spCadastrarClientes  'Cristiana Terra Mendonça', '15/01/1974','81154228274','F', 'Avenida Vinte e Um de Julho','90','68904-680','Guarulhos','São Paulo','São Paulo'
 
-SELECT * FROM tbCliente
 
 --Maria Eduarda
 --d)Criar via stored procedure as encomendas abaixo relacionadas, fazendo as verificações abaixo:
@@ -142,8 +144,7 @@ EXEC spInsereEncomenda '2015-08-08', 1, 450.00, '2015-08-15'
 EXEC spInsereEncomenda '2015-10-10', 2, 200.00, '2015-10-15'
 EXEC spInsereEncomenda '2015-10-10', 3, 150.00, '2015-12-10'
 EXEC spInsereEncomenda '2015-06-10', 1,  250.00, '2015-12-10'
-EXEC spInsereEncomenda '2015-10-05', 45, 150.00, '2015-10-12'
-
+EXEC spInsereEncomenda '2015-10-05', 4, 150.00, '2015-10-12'
 SELECT * FROM tbEncomenda
 
 
@@ -161,7 +162,7 @@ AS
 		VALUES (@codEncomenda, @codProduto, @qtdeKilos, @subTotal)
 	END
 
-EXEC spInserirProdutosnaEncomenda 1,1,2.5,105.00
+EXEC spInserirProdutosnaEncomenda 1,1,'2.5',105.00
 EXEC spInserirProdutosnaEncomenda 1, 10, 2.6, 70.00
 EXEC spInserirProdutosnaEncomenda 1, 9, 6, 150.00
 EXEC spInserirProdutosnaEncomenda 1, 12, 4.3, 125.00
@@ -171,7 +172,6 @@ EXEC spInserirProdutosnaEncomenda 3, 9, 2, 50.00
 EXEC spInserirProdutosnaEncomenda 4, 2, 3.5, 150.00
 EXEC spInserirProdutosnaEncomenda 4, 3, 2.2, 100.00
 EXEC spInserirProdutosnaEncomenda 5, 6, 3.4, 150.00
-
 SELECT * FROM tbItensEncomenda
 
 
@@ -211,20 +211,24 @@ AS
 --2-Caso o cliente não possua encomendas realizar a remoção e emitir a mensagem “Cliente XXXX removido com sucesso”, onde XXXX é o nome do cliente;
 
 CREATE PROCEDURE spExcluirCPF
-	@cpfCliente CHAR(15)
+
+ @cpfCliente CHAR(15)
 AS
-	BEGIN
-		DECLARE @codCliente INT
-		DECLARE @NomeCliente VARCHAR(50)
-		DECLARE @encomendasConta INT
+BEGIN
+    DECLARE @codCliente INT
+    DECLARE @NomeCliente VARCHAR(50)
+    DECLARE @encomendasConta INT
 
-    SELECT @codCliente= codCliente, @nomeCliente = nomeCliente FROM tbCliente
-		WHERE cpfCliente = @cpfCliente
+  
+    SELECT @codCliente= codCliente, @nomeCliente = nomeCliente
+    FROM tbCliente
+    WHERE cpfCliente = @cpfCliente
 
-    SELECT @encomendasConta = COUNT(*) FROM tbEncomenda
-		WHERE codCliente = @codCliente
+    SELECT @encomendasConta = COUNT(*)
+    FROM tbEncomenda
+    WHERE codCliente = @codCliente
 
-	IF @encomendasConta > 0
+    IF @encomendasConta > 0
     BEGIN
         PRINT 'Impossivel remover ' + @nomeCliente + ' porque possui encomendas'
     END
@@ -236,7 +240,7 @@ AS
     END
 END
 
-EXEC spExcluirCPF @cpfCliente = '82478659204'
+EXEC spExcluirCPF @cpfCliente = '55504743109'
 SELECT * FROM tbCliente
 
 
@@ -247,28 +251,35 @@ CREATE PROCEDURE sp_RemoverItemEncomenda
     @codEncomenda INT,
     @codProduto INT
 AS
-	BEGIN
-		DECLARE @subTotal MONEY
-		DECLARE @valorTotal MONEY
+BEGIN
+
+    DECLARE @subTotal MONEY
+    DECLARE @valorTotal MONEY
+
     
-		SELECT @subTotal = subTotal FROM tbItensEncomenda
-		 WHERE codEncomenda = @codEncomenda AND codProduto = @codProduto
+    SELECT @subTotal = subTotal
+    FROM tbItensEncomenda
+    WHERE codEncomenda = @codEncomenda AND codProduto = @codProduto
+
     
-		SELECT @valorTotal = valorTotal FROM tbEncomenda
-		 WHERE codEncomenda = @codEncomenda
+    SELECT @valorTotal = valorTotal
+    FROM tbEncomenda
+    WHERE codEncomenda = @codEncomenda
 
-		SET @valorTotal = @valorTotal - @subTotal
+    SET @valorTotal = @valorTotal - @subTotal
 
-		DELETE FROM tbItensEncomenda
-		 WHERE codEncomenda = @codEncomenda AND codProduto = @codProduto
+    
+    DELETE FROM tbItensEncomenda
+    WHERE codEncomenda = @codEncomenda AND codProduto = @codProduto
 
-		UPDATE tbEncomenda
-		SET valorTotal = @valorTotal
-		WHERE codEncomenda = @codEncomenda
+    
+    UPDATE tbEncomenda
+    SET valorTotal = @valorTotal
+    WHERE codEncomenda = @codEncomenda
 
-		PRINT 'Item:' + CAST(@codEncomenda AS VARCHAR) + 'foi removido'
-		PRINT 'Valor atualizado para ' + CAST(@valorTotal AS VARCHAR)
-	END
+    PRINT 'Item:' + CAST(@codEncomenda AS VARCHAR) + 'foi removido'
+    PRINT 'Valor atualizado para ' + CAST(@valorTotal AS VARCHAR)
+END
 
 SELECT * FROM tbEncomenda
 
@@ -284,10 +295,14 @@ BEGIN
     DECLARE @codCliente INT
     DECLARE @codEncomenda INT
 
+ 
     SELECT @codCliente = codCliente
     FROM tbCliente
     WHERE cpfCliente = @cpfCliente
 
+
+
+   
      SELECT @codCliente = codCliente
     FROM tbCliente
     WHERE cpfCliente = @cpfCliente
@@ -308,14 +323,14 @@ BEGIN
     END
    
    DELETE FROM tbItensEncomenda WHERE codEncomenda = @codEncomenda
-   DELETE FROM tbEncomenda WHERE codEncomenda = @codEncomenda
+    DELETE FROM tbEncomenda WHERE codEncomenda = @codEncomenda
 
     PRINT 'Encomenda do(a)' + @cpfCliente + 'na data: ' + CAST(@dataEntrega AS VARCHAR) + ' foi excluída com sucesso.'
-	END
-		DECLARE @mensagem VARCHAR(MAX)
+END
+DECLARE @mensagem NVARCHAR(MAX)
 
 
-EXEC spExcluirEncomenda @cpfCliente = '73558849213', @dataEntrega = '2023-08-21'
+EXEC spExcluirEncomenda @cpfCliente = '12345678901', @dataEntrega = '2023-08-21'
 
 SELECT * FROM tbCliente
 
@@ -327,11 +342,18 @@ CREATE PROCEDURE spListaDeEncomenda
 AS
 	BEGIN
 		SELECT
-		 E.codEncomenda,E.dataEncomenda,C.nomeCliente,P.nomeProduto,IE.qtdeKilos,IE.subTotal FROM tbEncomenda AS E
-			INNER JOIN tbCliente AS C ON E.codCliente = C.codCliente
-				INNER JOIN tbItensEncomenda AS IE ON E.codEncomenda = IE.codEncomenda
-					INNER JOIN tbProduto AS P ON IE.codProduto = P.codProduto
-						WHERE E.dataEntrega = @dataEntrega
-	END
+		 E.codEncomenda
+        ,E.dataEncomenda
+        ,C.nomeCliente
+        ,P.nomeProduto
+        ,IE.qtdeKilos
+        ,IE.subTotal
+    FROM tbEncomenda AS E
+    INNER JOIN tbCliente AS C ON E.codCliente = C.codCliente
+    INNER JOIN tbItensEncomenda AS IE ON E.codEncomenda = IE.codEncomenda
+    INNER JOIN tbProduto AS P ON IE.codProduto = P.codProduto
+    WHERE E.dataEntrega = @dataEntrega
+END
 
-	SELECT * FROM tbEncomenda
+
+SELECT * FROM tbEncomenda
